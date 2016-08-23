@@ -12,8 +12,20 @@ using System.Timers;
 
 namespace PowderToyApi
 {
+    public enum Savestauts
+    {
+        None,
+        DELTED,
+        OK
+    }
     static public class PowderToy
     {
+        public enum AuthStatus
+        {
+            Fail,
+            Sucess,
+            Unknow
+        }
         public static string USERID = "";
         private static string SESSIONID = "";
         private static string SESSIONKEY = "";
@@ -308,8 +320,7 @@ namespace PowderToyApi
         }
      
     }
-
-    public class PowderToyComment
+    public class PowderToySaveStatus
     {
         public String Username = "";
         public string Comment = "";
@@ -324,34 +335,9 @@ namespace PowderToyApi
         public string Explanation = "";
         public bool IsPublic = true;
         public string Maker = "";
+        public int totalpage = 0;
         public int CommentCount = 0;
-        int totalpage = 0;
-        Timer timer = new Timer();
-
-
-        public PowderToyComment()
-        {
-
-        }
-        public PowderToyComment(int ID, string Username, string Comment, Savestauts stauts, TimeSpan Time, int Score, int Voteup, int VoteDown, int Hits, string Title, string Explanation, bool IsPublic, string Maker, int TotalPage)
-        {
-            this.Username = Username;
-            this.Comment = Comment;
-            this.stauts = stauts;
-            this.Time = Time;
-            this.ID = ID;
-            this.Score = Score;
-            this.VoteUp = Voteup;
-            this.VoteDown = VoteDown;
-            this.Hits = Hits;
-            this.Title = Title;
-            this.Explanation = Explanation;
-            this.IsPublic = IsPublic;
-            this.Maker = Maker;
-            this.totalpage = TotalPage;
-
-        }
-        public PowderToyComment(int ID)
+        public PowderToySaveStatus(int ID)
         {
             this.ID = ID;
             HttpWebRequest wReq;
@@ -444,6 +430,115 @@ namespace PowderToyApi
             }
             IsPublic = Convert.ToBoolean(View[14]);
         }
+    }
+    public class PowderToyComment
+    {
+        public String Username = "";
+        public string Comment = "";
+        public TimeSpan Time = new TimeSpan();
+        public int ID = 0;
+        int totalpage = 0;
+        Timer timer = new Timer();
+
+
+        public PowderToyComment()
+        {
+
+        }
+        public PowderToyComment(int ID, string Username, string Comment, TimeSpan Time)
+        {
+            this.Username = Username;
+            this.Comment = Comment;
+            this.Time = Time;
+            this.ID = ID;
+        }
+        public PowderToyComment(int ID)
+        {
+            this.ID = ID;
+            HttpWebRequest wReq;
+            HttpWebResponse wRes;
+
+            WebRequest requestPic = WebRequest.Create("http://static.powdertoy.co.uk/" + ID + ".png");
+
+            WebResponse responsePic = requestPic.GetResponse();
+
+            Uri uri = new Uri("http://powdertoy.co.uk/Browse/View.json?ID=" + ID); // string 을 Uri 로 형변환
+            wReq = (HttpWebRequest)WebRequest.Create(uri); // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
+            wReq.Method = "GET"; // 전송 방법 "GET" or "POST"
+            wReq.ServicePoint.Expect100Continue = false;
+            wReq.CookieContainer = new CookieContainer();
+            string res = null;
+
+            using (wRes = (HttpWebResponse)wReq.GetResponse())
+            {
+                Stream respPostStream = wRes.GetResponseStream();
+                StreamReader readerPost = new StreamReader(respPostStream, Encoding.GetEncoding("EUC-KR"), true);
+
+                res = readerPost.ReadToEnd();
+            }
+
+            JsonTextParser parser = new JsonTextParser();
+            JsonObject obj = parser.Parse(res);
+
+            JsonUtility.GenerateIndentedJsonText = false;
+
+
+            int i = 0;
+            String[] View = null;
+            View = new string[17];
+            foreach (JsonObject field in obj as JsonObjectCollection)
+            {
+                i++;
+                string name = field.Name;
+                string value = string.Empty;
+                string type = field.GetValue().GetType().Name;
+
+                // try to get value.
+                switch (type)
+                {
+                    case "String":
+                        value = (string)field.GetValue();
+                        break;
+
+                    case "Double":
+                        value = field.GetValue().ToString();
+                        break;
+
+                    case "Boolean":
+                        value = field.GetValue().ToString();
+                        break;
+
+                }
+                View[i] = value;
+
+            }
+        
+            TimeSpan t = TimeSpan.FromSeconds(Convert.ToInt32(View[11]));
+            int hour = t.Hours + 9;
+            if (hour > 24)
+            {
+                hour = hour - 24;
+                if (hour >= 12)
+                    hour = hour + 12;
+            }
+
+            this.Time = new TimeSpan(hour, t.Minutes, t.Seconds);
+       
+            if (Convert.ToInt32(View[13]) / 20 == 0)
+            {
+                totalpage = Convert.ToInt32(View[13]);
+            }
+            else if (Convert.ToInt32(View[13]) / 20 == Convert.ToInt32(Convert.ToInt32(View[13]) / 20))
+            {
+                int one = Convert.ToInt32(View[13]) / 20 + 1;
+                totalpage = one;
+            }
+            else
+            {
+                totalpage = Convert.ToInt32(View[13]) / 20;
+            }
+ 
+        }
         public List<PowderToyComment> GetAll()
         {
             List<PowderToyComment> powder = new List<PowderToyComment>();
@@ -505,7 +600,7 @@ namespace PowderToyApi
                             if (hour >= 12)
                                 hour = hour + 12;
                         }
-                        powder.Add(new PowderToyComment(ID, Username[Username.Count - 1], CommentText[CommentText.Count - 1], Savestauts.OK, t, Score, VoteUp, VoteDown, Hits, Title, Explanation, IsPublic, Maker, totalpage));
+                        powder.Add(new PowderToyComment(ID, Username[Username.Count - 1], CommentText[CommentText.Count - 1], t));
 
                     }
                 }
@@ -513,73 +608,68 @@ namespace PowderToyApi
             return powder;
 
         }
-        public void Alarm(int Elapsed)
-        {
-            timer.Interval = Elapsed;
-            timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
-            timer.Start();
-        }
+        //public void Alarm(int Elapsed)
+        //{
+        //    timer.Interval = Elapsed;
+        //    timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
+        //    timer.Start();
+        //}
 
-        private void timer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            //HttpWebRequest wReq;
-            //HttpWebResponse wRes;
-            //int count = CommentCount + 20;
-            //Uri uri = new Uri("http://powdertoy.co.uk/Browse/Comments.json?ID=" + ID + "& Start =" + CommentCount + "&Count=" + count); // string 을 Uri 로 형변환
-            //wReq = (HttpWebRequest)WebRequest.Create(uri); // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
-            //wReq.Method = "GET"; // 전송 방법 "GET" or "POST"
-            //wReq.ServicePoint.Expect100Continue = false;
-            //wReq.CookieContainer = new CookieContainer();
-            //string res = null;
+        //private void timer_Elapsed(object sender, ElapsedEventArgs e)
+        //{
+        //    //HttpWebRequest wReq;
+        //    //HttpWebResponse wRes;
+        //    //int count = CommentCount + 20;
+        //    //Uri uri = new Uri("http://powdertoy.co.uk/Browse/Comments.json?ID=" + ID + "& Start =" + CommentCount + "&Count=" + count); // string 을 Uri 로 형변환
+        //    //wReq = (HttpWebRequest)WebRequest.Create(uri); // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
+        //    //wReq.Method = "GET"; // 전송 방법 "GET" or "POST"
+        //    //wReq.ServicePoint.Expect100Continue = false;
+        //    //wReq.CookieContainer = new CookieContainer();
+        //    //string res = null;
 
-            //using (wRes = (HttpWebResponse)wReq.GetResponse())
-            //{
-            //    Stream respPostStream = wRes.GetResponseStream();
-            //    StreamReader readerPost = new StreamReader(respPostStream, Encoding.GetEncoding("EUC-KR"), true);
+        //    //using (wRes = (HttpWebResponse)wReq.GetResponse())
+        //    //{
+        //    //    Stream respPostStream = wRes.GetResponseStream();
+        //    //    StreamReader readerPost = new StreamReader(respPostStream, Encoding.GetEncoding("EUC-KR"), true);
 
-            //    res = readerPost.ReadToEnd();
-            //}
-            //JsonTextParser parser = new JsonTextParser();
-            //JsonObject obj = parser.Parse(res);
-            //JsonArrayCollection col = (JsonArrayCollection)obj;
+        //    //    res = readerPost.ReadToEnd();
+        //    //}
+        //    //JsonTextParser parser = new JsonTextParser();
+        //    //JsonObject obj = parser.Parse(res);
+        //    //JsonArrayCollection col = (JsonArrayCollection)obj;
 
-            //string[] Username = new string[22];
-            //string[] CommentText = new string[22];
-            //string[] Date = new string[22];
-            //int i = 0;
-            //foreach (JsonObjectCollection joc in col)
-            //{
-            //    i++;
-            //    Username[i] = (string)joc["Username"].GetValue();
-            //    CommentText[i] = (string)joc["Text"].GetValue();
-            //    Date[i] = (string)joc["Timestamp"].GetValue();
-            //    Console.WriteLine(Username[i] + CommentText[i] + Date[i]);
-            //    TimeSpan t = TimeSpan.FromSeconds(Convert.ToInt32(Date[i]));
-            //    int hour = t.Hours + 9;
-            //    if (hour > 24)
-            //    {
-            //        hour = hour - 24;
-            //        if (hour >= 12)
-            //            hour = hour + 12;
-            //    }
-            //    textBox3.AppendText("닉네임: " + Username[i] + "\r\n" + "날짜: " + hour + "시" + t.Minutes + "분" + t.Seconds + "초" + " 댓글: " + CommentText[i] + "\r\n\r\n");
-            //}
+        //    //string[] Username = new string[22];
+        //    //string[] CommentText = new string[22];
+        //    //string[] Date = new string[22];
+        //    //int i = 0;
+        //    //foreach (JsonObjectCollection joc in col)
+        //    //{
+        //    //    i++;
+        //    //    Username[i] = (string)joc["Username"].GetValue();
+        //    //    CommentText[i] = (string)joc["Text"].GetValue();
+        //    //    Date[i] = (string)joc["Timestamp"].GetValue();
+        //    //    Console.WriteLine(Username[i] + CommentText[i] + Date[i]);
+        //    //    TimeSpan t = TimeSpan.FromSeconds(Convert.ToInt32(Date[i]));
+        //    //    int hour = t.Hours + 9;
+        //    //    if (hour > 24)
+        //    //    {
+        //    //        hour = hour - 24;
+        //    //        if (hour >= 12)
+        //    //            hour = hour + 12;
+        //    //    }
+        //    //    textBox3.AppendText("닉네임: " + Username[i] + "\r\n" + "날짜: " + hour + "시" + t.Minutes + "분" + t.Seconds + "초" + " 댓글: " + CommentText[i] + "\r\n\r\n");
+        //    //}
 
-            //if (전에[1] != CommentText[1])
-            //{
-            //    notifyIcon1.Visible = true; // 트레이의 아이콘을 보이게 한다.
-            //    notifyIcon1.BalloonTipText = CommentText[1];
-            //    notifyIcon1.ShowBalloonTip(500);
-            //    전에 = CommentText;
-            //    timer1.Start();
-            //}
-        }
+        //    //if (전에[1] != CommentText[1])
+        //    //{
+        //    //    notifyIcon1.Visible = true; // 트레이의 아이콘을 보이게 한다.
+        //    //    notifyIcon1.BalloonTipText = CommentText[1];
+        //    //    notifyIcon1.ShowBalloonTip(500);
+        //    //    전에 = CommentText;
+        //    //    timer1.Start();
+        //    //}
+        //}
 
-        public enum Savestauts
-        {
-            None,
-            DELTED,
-            OK
-        }
+    
     }
 }

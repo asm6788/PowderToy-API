@@ -15,11 +15,11 @@ namespace ConsoleApplication1
         static void Main(string[] args)
         {
             //PowderToy.Auth("ID","PW");
-            //PowderToyComment powe = new PowderToyComment(2030698);
-            //List<PowderToyComment> pow = new List<PowderToyComment>();
-            //pow = powe.GetAll();
-            //pow = pow;
-           // Console.Read();
+            PowderToyComment powe = new PowderToyComment(2030698);
+            List<PowderToyComment> pow = new List<PowderToyComment>();
+            pow = powe.GetAll();
+            pow = pow;
+            Console.Read();
         }
     }
 }
