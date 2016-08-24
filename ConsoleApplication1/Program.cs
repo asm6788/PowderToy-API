@@ -14,12 +14,20 @@ namespace ConsoleApplication1
     {
         static void Main(string[] args)
         {
-            //PowderToy.Auth("ID","PW");
-            PowderToyComment powe = new PowderToyComment(2030698);
-            List<PowderToyComment> pow = new List<PowderToyComment>();
-            pow = powe.GetAll();
-            pow = pow;
+          //  PowderToy.Auth("ID","PW");
+            //PowderToyComment powe = new PowderToyComment(2030698);
+            //powe.Alarm(10);
+            //List<PowderToyComment> pow = new List<PowderToyComment>();
+            //pow = powe.GetAll();
+            //pow = pow;
+            //powe.Newcomment += Powe_Newcomment;
+            //PowderToy.AddComment(2030698, "lolololololololololollololol");
             Console.Read();
         }
+
+        //private static void Powe_Newcomment(object sender, string e)
+        //{
+        //    Console.WriteLine(e);
+        //}
     }
 }
