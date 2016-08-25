@@ -29,6 +29,26 @@ static public class PowderToy
         {
             nvc.Add("Publish", "Private");
         }
+        if (Name.Trim() == "")
+        {
+            throw new Exception("Name is blank");
+        }
+        else if (Description.Trim() == "")
+        {
+            throw new Exception("Description is blank");
+        }
+        try
+        { 
+            if (File.ReadAllLines(file)[0].Remove(4) != "OPS1")
+            {
+                throw new Exception("Invalid SaveFile");
+            }
+        }
+        catch
+        {
+            throw new Exception("Invalid SaveFile");
+        }
+        Console.WriteLine(File.ReadAllLines(file)[0].Remove(4));
 
         Console.WriteLine(string.Format("Uploading {0} to {1}", file, "http://powdertoy.co.uk/Save.api"));
         string boundary = "---------------------------" + DateTime.Now.Ticks.ToString("x");
@@ -75,36 +95,18 @@ static public class PowderToy
         }
 
         WebResponse wresp = null;
-        try
-        {
             wresp = wr.GetResponse();
             Stream stream2 = wresp.GetResponseStream();
             StreamReader reader2 = new StreamReader(stream2);
             string resopne = reader2.ReadToEnd();
             Console.WriteLine(string.Format("File uploaded, server response is: {0}", resopne));
             return Convert.ToInt32(resopne.Remove(0, 3));
-        }
-        catch
-        {
-            Console.WriteLine("Error uploading file");
-            wresp?.Close();
-            wresp = null;
-        }
-        finally
-        {
-            wr = null;
-        }
-
-        return 0;
     }
     public static void Auth(string ID, string PW)
     {
         string callUrl = "http://powdertoy.co.uk/Login.json";
-        string[] data = new string[2];
-        data[0] = "asm6788";         // id
-        data[1] = MD5Hash(ID + "-" + MD5Hash(PW));          // pw
 
-        string postData = string.Format("Username={0}&Hash={1}", data[0], data[1]);
+        string postData = string.Format("Username={0}&Hash={1}", ID, MD5Hash(ID + "-" + MD5Hash(PW)));
 
 
         HttpWebRequest httpWebRequest = WebRequest.Create(callUrl) as HttpWebRequest;
@@ -125,7 +127,12 @@ static public class PowderToy
             JsonObject obj = parser.Parse(res);
 
             foreach (JsonObject field in obj as JsonObjectCollection)
-                if (field.Name == "UserID")
+            {
+                if (field.Name == "Error")
+                {
+                    throw new Exception(field.GetValue().ToString());
+                }
+                else if (field.Name == "UserID")
                 {
                     USERID = field.GetValue().ToString();
                 }
@@ -137,8 +144,9 @@ static public class PowderToy
                 {
                     SESSIONKEY = field.GetValue().ToString();
                 }
+            }
+            httpWebResponse.Close();
         }
-        httpWebResponse.Close();
     }
     public static void DeleteSAVE(int SaveID)
     {
@@ -161,7 +169,12 @@ static public class PowderToy
             JsonObject obj = parser.Parse(res);
 
             foreach (JsonObject field in obj as JsonObjectCollection)
-                if (field.Name == "UserID")
+            {
+                if (field.Name == "Error")
+                {
+                    throw new Exception(field.GetValue().ToString());
+                }
+                else if (field.Name == "UserID")
                 {
                     USERID = field.GetValue().ToString();
                 }
@@ -173,6 +186,7 @@ static public class PowderToy
                 {
                     SESSIONKEY = field.GetValue().ToString();
                 }
+            }
         }
         httpWebResponse.Close();
     }
@@ -199,6 +213,11 @@ static public class PowderToy
         {
             string res = streamReader.ReadToEnd();
             Console.WriteLine(res);
+
+            if (res == "Error: 404")
+            {
+                throw new Exception("Invalid ID");
+            }
 
             JsonTextParser parser = new JsonTextParser();
             JsonObject obj = parser.Parse(res);
@@ -243,6 +262,10 @@ static public class PowderToy
         using (StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream(), Encoding.GetEncoding("UTF-8")))
         {
             string res = streamReader.ReadToEnd();
+            if(res == "No such save exists")
+            {
+                throw new Exception("No such save exists");
+            }
             Console.WriteLine(res);
         }
         httpWebResponse.Close();
@@ -271,6 +294,10 @@ static public class PowderToy
         using (StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream(), Encoding.GetEncoding("UTF-8")))
         {
             string res = streamReader.ReadToEnd();
+            if (res == "No such save exists")
+            {
+                throw new Exception("No such save exists");
+            }
             Console.WriteLine(res);
         }
         httpWebResponse.Close();

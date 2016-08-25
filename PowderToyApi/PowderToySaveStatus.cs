@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -15,7 +16,7 @@ public class PowderToySaveStatus
 {
     public string Username = "";
     public string Comment = "";
-    public SaveStatus stauts = SaveStatus.NONE;
+    public Savestauts stauts = Savestauts.None;
     public TimeSpan Time = new TimeSpan();
     public int ID = 0;
     public int Score = 0;
@@ -28,6 +29,7 @@ public class PowderToySaveStatus
     public string Maker = "";
     public int totalpage = 0;
     public int CommentCount = 0;
+    public Image SavefilePic = null;
     public PowderToySaveStatus(int ID)
     {
         this.ID = ID;
@@ -37,7 +39,7 @@ public class PowderToySaveStatus
         WebRequest requestPic = WebRequest.Create("http://static.powdertoy.co.uk/" + ID + ".png");
 
         WebResponse responsePic = requestPic.GetResponse();
-
+        SavefilePic = Image.FromStream(responsePic.GetResponseStream());
         Uri uri = new Uri("http://powdertoy.co.uk/Browse/View.json?ID=" + ID); // string으로 URI 생성
         wReq = WebRequest.Create(uri) as HttpWebRequest; // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
         wReq.Method = "GET"; // 전송 방법 "GET" or "POST"

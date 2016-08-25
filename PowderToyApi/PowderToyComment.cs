@@ -86,6 +86,10 @@ public class PowderToyComment
             res = readerPost.ReadToEnd();
         }
 
+        if (res == "Error: 404")
+        {
+            throw new Exception("Invalid ID");
+        }
         JsonTextParser parser = new JsonTextParser();
         JsonObject obj = parser.Parse(res);
 
@@ -238,6 +242,10 @@ public class PowderToyComment
             StreamReader readerPost = new StreamReader(respPostStream, Encoding.GetEncoding("EUC-KR"), true);
 
             res = readerPost.ReadToEnd();
+        }
+        if(res == "Error: 404")
+        {
+            throw new Exception("Invalid ID");
         }
         JsonTextParser parser = new JsonTextParser();
         JsonObject obj = parser.Parse(res);
