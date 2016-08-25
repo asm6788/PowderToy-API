@@ -11,11 +11,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
-public class NewComment : EventArgs
+public class NewCommentEventArgs : EventArgs
 {
     public string eventData;
 
-    public NewComment(string eventData)
+    public NewCommentEventArgs(string eventData)
     {
         this.eventData = eventData;
     }
@@ -23,7 +23,7 @@ public class NewComment : EventArgs
 
 public class PowderToyComment
 {
-    public String Username = "";
+    public string Username = "";
     public string Comment = "";
     public DateTime Time = new DateTime();
     public int ID = 0;
@@ -71,8 +71,8 @@ public class PowderToyComment
 
         WebResponse responsePic = requestPic.GetResponse();
 
-        Uri uri = new Uri("http://powdertoy.co.uk/Browse/View.json?ID=" + ID); // string 을 Uri 로 형변환
-        wReq = (HttpWebRequest)WebRequest.Create(uri); // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
+        Uri uri = new Uri("http://powdertoy.co.uk/Browse/View.json?ID=" + ID); // string으로 URI 생성
+        wReq = WebRequest.Create(uri) as HttpWebRequest; // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
         wReq.Method = "GET"; // 전송 방법 "GET" or "POST"
         wReq.ServicePoint.Expect100Continue = false;
         wReq.CookieContainer = new CookieContainer();
@@ -93,20 +93,17 @@ public class PowderToyComment
 
 
         int i = 0;
-        String[] View = null;
-        View = new string[17];
+        string[] View = new string[17];
         foreach (JsonObject field in obj as JsonObjectCollection)
         {
             i++;
-            string name = field.Name;
             string value = string.Empty;
             string type = field.GetValue().GetType().Name;
-
             // try to get value.
             switch (type)
             {
                 case "String":
-                    value = (string)field.GetValue();
+                    value = field.GetValue() as string;
                     break;
 
                 case "Double":
@@ -132,7 +129,7 @@ public class PowderToyComment
         }
 
         DateTime Date = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc) + t;
-        this.Time = new DateTime(Date.Year, Date.Month, Date.Day, hour, t.Minutes, t.Seconds, t.Milliseconds);
+        Time = new DateTime(Date.Year, Date.Month, Date.Day, hour, t.Minutes, t.Seconds, t.Milliseconds);
 
 
         if (Convert.ToInt32(View[13]) / 20 == 0)
@@ -156,10 +153,8 @@ public class PowderToyComment
         int CommentCount = 0;
         int i = 0;
         double temp = 0;
-        List<string> Username = new List<string>();
-        List<string> CommentText = new List<string>();
-        List<string> Timestamp = new List<string>();
-        List<DateTime> Date = new List<DateTime>();
+        
+        
         if (totalpage == 0)
             throw new Exception("No Initialization");
         else
@@ -169,21 +164,17 @@ public class PowderToyComment
                 HttpWebRequest wReq;
                 HttpWebResponse wRes;
                 int startcount = CommentCount - 20;
-                Uri uri = new Uri("http://powdertoy.co.uk/Browse/Comments.json?ID=" + ID + "&Start=" + startcount + "&Count=20"); // string 을 Uri 로 형변환
-                wReq = (HttpWebRequest)WebRequest.Create(uri); // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
+                Uri uri = new Uri("http://powdertoy.co.uk/Browse/Comments.json?ID=" + ID + "&Start=" + startcount + "&Count=20"); // string으로 URI 생성
+                wReq = WebRequest.Create(uri) as HttpWebRequest; // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
                 wReq.Method = "GET"; // 전송 방법 "GET" or "POST"
                 wReq.ServicePoint.Expect100Continue = false;
                 wReq.CookieContainer = new CookieContainer();
                 string res = null;
 
                 if ((i / ((double)totalpage * 20)) + 0.01 == temp)
-                {
-                    goto Out;
-                }
+                    break;
                 else
-                {
                     temp = (i / ((double)totalpage * 20)) + 0.01;
-                }
 
                 using (wRes = (HttpWebResponse)wReq.GetResponse())
                 {
@@ -197,15 +188,16 @@ public class PowderToyComment
                 JsonArrayCollection col = (JsonArrayCollection)obj;
 
 
-
+                List<string> Username = new List<string>();
+                List<string> CommentText = new List<string>();
+                List<string> Timestamp = new List<string>();
                 foreach (JsonObjectCollection joc in col)
                 {
                     i++;
-
                     Console.WriteLine(Convert.ToInt32((i / ((double)totalpage * 20)) * 100));
-                    Username.Add((string)joc["Username"].GetValue());
-                    CommentText.Add((string)joc["Text"].GetValue());
-                    Timestamp.Add((string)joc["Timestamp"].GetValue());
+                    Username.Add(joc["Username"].GetValue() as string);
+                    CommentText.Add(joc["Text"].GetValue() as string);
+                    Timestamp.Add(joc["Timestamp"].GetValue() as string);
                     Console.WriteLine(Username[Username.Count - 1] + CommentText[CommentText.Count - 1] + Timestamp[Timestamp.Count - 1]);
                     TimeSpan t = TimeSpan.FromSeconds(Convert.ToInt32(Timestamp[Timestamp.Count - 1]));
                     int hour = t.Hours + 9;
@@ -216,13 +208,12 @@ public class PowderToyComment
                             hour = hour + 12;
                     }
                     DateTime Date1 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc) + t;
+                    List<DateTime> Date = new List<DateTime>();
                     Date.Add(new DateTime(Date1.Year, Date1.Month, Date1.Day, hour, t.Minutes, t.Seconds, t.Milliseconds));
                     powder.Add(new PowderToyComment(ID, Username[Username.Count - 1], CommentText[CommentText.Count - 1], Date[Date.Count - 1]));
                 }
             }
-        Out:;
         return powder;
-
     }
     public void Alarm(int Elapsed)
     {
@@ -281,7 +272,7 @@ public class PowderToyComment
         HttpWebResponse wRes;
         int CommentCount = 0;
         int count = CommentCount + 20;
-        Uri uri = new Uri("http://powdertoy.co.uk/Browse/Comments.json?ID=" + ID + "& Start =" + ID + "&Count=" + count); // string 을 Uri 로 형변환
+        Uri uri = new Uri("http://powdertoy.co.uk/Browse/Comments.json?ID=" + ID + "& Start =" + ID + "&Count=" + count); // string으로 URI 생성
         wReq = (HttpWebRequest)WebRequest.Create(uri); // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
         wReq.Method = "GET"; // 전송 방법 "GET" or "POST"
         wReq.ServicePoint.Expect100Continue = false;

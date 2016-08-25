@@ -13,9 +13,9 @@ using System.Timers;
 
 public class PowderToySaveStatus
 {
-    public String Username = "";
+    public string Username = "";
     public string Comment = "";
-    public Savestauts stauts = Savestauts.None;
+    public SaveStatus stauts = SaveStatus.NONE;
     public TimeSpan Time = new TimeSpan();
     public int ID = 0;
     public int Score = 0;
@@ -38,8 +38,8 @@ public class PowderToySaveStatus
 
         WebResponse responsePic = requestPic.GetResponse();
 
-        Uri uri = new Uri("http://powdertoy.co.uk/Browse/View.json?ID=" + ID); // string 을 Uri 로 형변환
-        wReq = (HttpWebRequest)WebRequest.Create(uri); // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
+        Uri uri = new Uri("http://powdertoy.co.uk/Browse/View.json?ID=" + ID); // string으로 URI 생성
+        wReq = WebRequest.Create(uri) as HttpWebRequest; // WebRequest 객체 형성 및 HttpWebRequest 로 형변환
         wReq.Method = "GET"; // 전송 방법 "GET" or "POST"
         wReq.ServicePoint.Expect100Continue = false;
         wReq.CookieContainer = new CookieContainer();
@@ -60,32 +60,31 @@ public class PowderToySaveStatus
 
 
         int i = 0;
-        String[] View = null;
-        View = new string[17];
+        string[] View = new string[17];
         foreach (JsonObject field in obj as JsonObjectCollection)
         {
             i++;
-            string name = field.Name;
-            string value = string.Empty;
             string type = field.GetValue().GetType().Name;
 
             // try to get value.
             switch (type)
             {
                 case "String":
-                    value = (string)field.GetValue();
+                    View[i] = (string)field.GetValue();
                     break;
 
                 case "Double":
-                    value = field.GetValue().ToString();
+                    View[i] = field.GetValue().ToString();
                     break;
 
                 case "Boolean":
-                    value = field.GetValue().ToString();
+                    View[i] = field.GetValue().ToString();
                     break;
 
+                default:
+                    View[i] = null;
+                    break;
             }
-            View[i] = value;
 
         }
         Score = Convert.ToInt32(View[3]);
@@ -103,7 +102,7 @@ public class PowderToySaveStatus
                 hour = hour + 12;
         }
 
-        this.Time = new TimeSpan(hour, t.Minutes, t.Seconds);
+        Time = new TimeSpan(hour, t.Minutes, t.Seconds);
         Maker = View[12];
         CommentCount = Convert.ToInt32(View[13]);
         if (Convert.ToInt32(View[13]) / 20 == 0)
