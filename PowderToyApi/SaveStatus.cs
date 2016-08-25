@@ -12,9 +12,9 @@ using System.Timers;
 
 namespace PowderToyApi
 {
-    public enum Savestauts
+    public enum SaveStatus
     {
-        None,
+        NONE,
         DELTED,
         OK
     }
