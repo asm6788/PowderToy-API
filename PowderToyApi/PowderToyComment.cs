@@ -32,8 +32,8 @@ public class PowderToyComment
     string[] 전에 = null;
     Timer timer = new Timer();
 
-    public event EventHandler<string> Newcomment; //닷넷에 미리 정의된 System.EventHandler 델리게이트 이용
-    public void DoClick(string data)
+    public event EventHandler<PowderToyComment> Newcomment; //닷넷에 미리 정의된 System.EventHandler 델리게이트 이용
+    public void DoClick(PowderToyComment data)
     {
         Newcomment?.Invoke(null,data); //System.EventHandler은 두개의 매개변수를 요구함(일단 null 처리)
     }
@@ -301,12 +301,27 @@ public class PowderToyComment
 
         string[] Username = new string[22];
         string[] CommentText = new string[22];
+        string[] Timestamp = new string[22];
+        DateTime[] Date = new DateTime[22];
         int i = 0;
         foreach (JsonObjectCollection joc in col)
         {
             i++;
             Username[i] = (string)joc["Username"].GetValue();
             CommentText[i] = (string)joc["Text"].GetValue();
+            Timestamp[i] = (string)joc["Timestamp"].GetValue();
+            Console.WriteLine(Username[i] + CommentText[i] + Timestamp[i]);
+            TimeSpan t = TimeSpan.FromSeconds(Convert.ToInt32(Timestamp[i]));
+            int hour = t.Hours + 9;
+            if (hour > 24)
+            {
+                hour = hour - 24;
+                if (hour >= 12)
+                    hour = hour + 12;
+            }
+            DateTime Date1 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc) + t;
+            Date[i] = new DateTime(Date1.Year, Date1.Month, Date1.Day, hour, t.Minutes, t.Seconds, t.Milliseconds);
+
             Console.WriteLine(Username[i] + CommentText[i]);
         
         }
@@ -314,7 +329,7 @@ public class PowderToyComment
         if (전에[1] != CommentText[1])
         {
             전에 = CommentText;
-            DoClick(전에[1]);
+            DoClick(new PowderToyComment(ID, Username[1], CommentText[1], Date[1]));
         }
     }
 

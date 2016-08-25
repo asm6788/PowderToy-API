@@ -14,7 +14,7 @@ namespace ConsoleApplication1
     {
         static void Main(string[] args)
         {
-          //  PowderToy.Auth("ID","PW");
+            //PowderToy.Auth("ID", "PW");
             //PowderToyComment powe = new PowderToyComment(2030698);
             //powe.Alarm(10);
             //List<PowderToyComment> pow = new List<PowderToyComment>();
@@ -25,9 +25,9 @@ namespace ConsoleApplication1
             Console.Read();
         }
 
-        //private static void Powe_Newcomment(object sender, string e)
+        //private static void Powe_Newcomment(object sender, PowderToyComment e)
         //{
-        //    Console.WriteLine(e);
+        //    Console.WriteLine("새댓글~!!!: "+e.Username + e.Comment + e.Time);
         //}
     }
 }
