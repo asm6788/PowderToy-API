@@ -1,12 +1,6 @@
 ﻿using PowderToyApi;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
 
 namespace ConsoleApplication1
 {
@@ -16,7 +10,8 @@ namespace ConsoleApplication1
         {
 
             //PowderToy.Auth("ID", "PW");
-            //PowderToySaveStatus powsave = new PowderToySaveStatus(0);
+            //PowderToySaveStatus powsave = new PowderToySaveStatus(1);
+            //powsave = powsave;
             //PowderToyComment powe = new PowderToyComment(0);
             //powe.Alarm(10);
             //List<PowderToyComment> pow = new List<PowderToyComment>();
